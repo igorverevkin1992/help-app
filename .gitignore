@@ -1,0 +1,16 @@
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+local.properties
+*.keystore
+*.jks
+
+.idea/
+*.iml
+.DS_Store
+
+# Keys baked into BuildConfig must live outside the repo.
+**/secrets.properties

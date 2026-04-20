@@ -1,0 +1,41 @@
+package com.helpapp.therapy.data.prefs
+
+import android.content.Context
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Stores the Claude API key in EncryptedSharedPreferences. BuildConfig value
+ * (injected from a Gradle property at build time) acts as a fallback for
+ * developer builds.
+ */
+@Singleton
+class ApiKeyStore @Inject constructor(
+    @ApplicationContext private val context: Context,
+) {
+    private val prefs by lazy {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            context,
+            "therapy_secure_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+    }
+
+    var apiKey: String
+        get() = prefs.getString(KEY, null).orEmpty()
+        set(value) = prefs.edit().putString(KEY, value).apply()
+
+    fun effectiveKey(fallback: String): String = apiKey.ifBlank { fallback }
+
+    private companion object {
+        const val KEY = "claude_api_key"
+    }
+}
