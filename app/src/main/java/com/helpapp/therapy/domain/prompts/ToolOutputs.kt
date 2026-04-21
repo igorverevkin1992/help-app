@@ -49,8 +49,8 @@ data class VitalityResponse(
 )
 
 /**
- * Decodes the JsonElement that Anthropic returns as the `input` of a tool_use
- * block. The schema is already validated on the API side, so we only need
+ * Decodes the JsonElement that Gemini returns as the `args` of a functionCall
+ * part. The schema is already validated on the API side, so we only need
  * type-safe deserialization here.
  */
 object ToolOutputs {

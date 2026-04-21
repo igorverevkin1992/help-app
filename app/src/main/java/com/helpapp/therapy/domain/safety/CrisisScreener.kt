@@ -12,7 +12,7 @@ data class CrisisScreen(
 
 /**
  * On-device keyword screener. This is NOT a clinical triage instrument — it
- * is a coarse filter that intercepts text before it is sent to the Claude
+ * is a coarse filter that intercepts text before it is sent to the Gemini
  * API, so that suicidal, self-harm, psychotic or violent-ideation content
  * routes the user into the CrisisScreen (hotline + trusted-contact call)
  * instead of becoming an LLM prompt. False positives are acceptable — false

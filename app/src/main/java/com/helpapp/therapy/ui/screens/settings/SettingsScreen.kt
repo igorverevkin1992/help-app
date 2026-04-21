@@ -63,7 +63,7 @@ fun SettingsScreen(
                 ContextField("Transcendent goal", state.context.transcendentGoal, vm::onGoalChange)
             }
 
-            SectionCard(title = "Claude API key") {
+            SectionCard(title = "Gemini API key") {
                 Text(
                     "Stored locally in EncryptedSharedPreferences. Required for all LLM calls.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -72,7 +72,7 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = state.apiKey,
                     onValueChange = vm::onApiKeyChange,
-                    label = { Text("sk-ant-…") },
+                    label = { Text("AIza…") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(

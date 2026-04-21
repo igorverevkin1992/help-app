@@ -17,7 +17,7 @@ therapeutic frame retargets without touching code.
 - Kotlin · Jetpack Compose · Material 3
 - Hilt DI · Room (SQLite) · DataStore · EncryptedSharedPreferences
 - Retrofit + OkHttp + kotlinx.serialization
-- Anthropic Messages API (`claude-3-5-sonnet-latest`)
+- Google Gemini generateContent API (`gemini-2.5-pro`)
 
 ## Modules
 
@@ -39,10 +39,9 @@ SQLite (Room). Five tables mirroring the architectural spec: `user_context_varia
 ## Build
 
 1. `./gradlew wrapper` (or use Android Studio to generate Gradle wrapper).
-2. Supply the Claude API key. Either:
-   - At build time: `./gradlew assembleDebug -PCLAUDE_API_KEY=sk-ant-...`, or
-   - At runtime via the Settings screen (stored in
-     `EncryptedSharedPreferences`).
+2. Supply the Gemini API key at runtime via the onboarding flow or the
+   Settings screen (stored in `EncryptedSharedPreferences`). Obtain one at
+   https://aistudio.google.com/apikey.
 3. `./gradlew assembleDebug`.
 
 Minimum SDK 26, target SDK 34.
@@ -50,7 +49,8 @@ Minimum SDK 26, target SDK 34.
 ## Prompting
 
 See `SystemPromptBuilder.kt` and `TaskDirectives.kt`. Each module builds a
-strict system prompt that injects the four context variables and asks
-Claude to return a fenced `json` block matching the module's schema. The
-JSON is parsed by `LlmJson` and rendered by the corresponding Compose
-screen — no free-form LLM text leaks into the visualizations.
+strict system instruction that injects the four context variables and
+forces Gemini to call a declared function whose parameters schema pins the
+shape of every module's response. The structured `args` are decoded by
+`ToolOutputs` and rendered by the corresponding Compose screen — no
+free-form LLM text leaks into the visualizations.

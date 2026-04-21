@@ -1,7 +1,7 @@
 package com.helpapp.therapy.di
 
 import com.helpapp.therapy.data.prefs.ApiKeyStore
-import com.helpapp.therapy.data.remote.ClaudeApi
+import com.helpapp.therapy.data.remote.GeminiApi
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -21,16 +21,14 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "https://api.anthropic.com/"
-    private const val ANTHROPIC_VERSION = "2023-06-01"
-    private const val ANTHROPIC_BETA = "tools-2024-05-16"
+    private const val BASE_URL = "https://generativelanguage.googleapis.com/"
 
-    // Anthropic's Let's Encrypt ISRG Root X1 chain — primary + backup pins.
-    // Anyone forking this must verify current pins against the live cert
-    // chain of api.anthropic.com before shipping.
-    private const val PIN_PRIMARY = "sha256/C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M="
-    private const val PIN_BACKUP_1 = "sha256/r/mIkG3eEpVdm+u/ko/cwxzOMo1bk4TyHIlByibiA5E="
-    private const val PIN_BACKUP_2 = "sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg="
+    // Google GTS root CA pins — primary + two backups. These MUST be verified
+    // against the live cert chain of generativelanguage.googleapis.com before
+    // shipping. Rotate when Google rolls roots.
+    private const val PIN_PRIMARY = "sha256/hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc="
+    private const val PIN_BACKUP_1 = "sha256/Vfd95BwDeSQo+NUYxVEEIlvkOlWY2SalKK1lPhzOx78="
+    private const val PIN_BACKUP_2 = "sha256/cGuxAXyFXFkWm61cF4HPWX8S0srS9j0aSqN0k4AP+4A="
 
     @Provides
     @Singleton
@@ -56,7 +54,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideCertificatePinner(): CertificatePinner = CertificatePinner.Builder()
-        .add("api.anthropic.com", PIN_PRIMARY, PIN_BACKUP_1, PIN_BACKUP_2)
+        .add("generativelanguage.googleapis.com", PIN_PRIMARY, PIN_BACKUP_1, PIN_BACKUP_2)
         .build()
 
     @Provides
@@ -69,9 +67,8 @@ object NetworkModule {
             // Never body-log. Bodies contain PHI (self-blame, cognitive hooks)
             // and the request header carries the API key.
             level = HttpLoggingInterceptor.Level.NONE
-            redactHeader("x-api-key")
+            redactHeader("x-goog-api-key")
             redactHeader("authorization")
-            redactHeader("anthropic-version")
         }
         return OkHttpClient.Builder()
             .certificatePinner(pinner)
@@ -79,9 +76,7 @@ object NetworkModule {
                 val key = apiKeyStore.apiKey
                 if (key.isBlank()) throw MissingApiKeyException()
                 val request = chain.request().newBuilder()
-                    .header("x-api-key", key)
-                    .header("anthropic-version", ANTHROPIC_VERSION)
-                    .header("anthropic-beta", ANTHROPIC_BETA)
+                    .header("x-goog-api-key", key)
                     .header("content-type", "application/json")
                     .build()
                 chain.proceed(request)
@@ -108,7 +103,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideClaudeApi(retrofit: Retrofit): ClaudeApi = retrofit.create(ClaudeApi::class.java)
+    fun provideGeminiApi(retrofit: Retrofit): GeminiApi = retrofit.create(GeminiApi::class.java)
 }
 
-class MissingApiKeyException : RuntimeException("Claude API key is not configured")
+class MissingApiKeyException : RuntimeException("Gemini API key is not configured")

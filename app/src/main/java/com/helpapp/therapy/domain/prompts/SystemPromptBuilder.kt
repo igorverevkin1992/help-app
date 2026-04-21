@@ -58,11 +58,11 @@ evolutionary psychology, and structural generative action.
         """
 
         private const val OUTPUT_CONTRACT = """
-When a tool is provided, you MUST call that tool exactly once and emit no
-prose outside of the tool call. Populate every field the tool's input_schema
-declares required. For free-text turns (no tool provided), answer in under
-180 words of plain Markdown without headers. Never mix prose and a tool
-call in the same response.
+When a function is provided, you MUST call that function exactly once and
+emit no prose outside of the function call. Populate every field the
+parameters schema declares required. For free-text turns (no function
+provided), answer in under 180 words of plain Markdown without headers.
+Never mix prose and a function call in the same response.
         """
     }
 }

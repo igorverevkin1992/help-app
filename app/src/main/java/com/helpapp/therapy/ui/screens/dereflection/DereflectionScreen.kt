@@ -98,7 +98,7 @@ fun DereflectionScreen(
                 }
             }
 
-            if (state.loading) LoadingRow("Claude is reframing operational tasks…")
+            if (state.loading) LoadingRow("Gemini is reframing operational tasks…")
             state.error?.let { ErrorBox(it) }
 
             state.response?.let { r ->

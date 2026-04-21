@@ -86,7 +86,7 @@ fun VitalityCompassScreen(
                 ) { Text(if (state.loading) "Defusing…" else "Defuse & generate split") }
             }
 
-            if (state.loading) LoadingRow("Claude is running ACT defusion…")
+            if (state.loading) LoadingRow("Gemini is running ACT defusion…")
             state.error?.let { ErrorBox(it) }
 
             state.response?.let { r ->

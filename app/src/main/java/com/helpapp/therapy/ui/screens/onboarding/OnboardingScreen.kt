@@ -113,8 +113,8 @@ private fun ConsentStep(accepted: Boolean, onAcceptedChange: (Boolean) -> Unit) 
         Text(
             "All clinical entries are stored only on this device, inside an encrypted " +
                 "database (SQLCipher) protected by a key held in the Android Keystore. " +
-                "Your Claude API key lives in EncryptedSharedPreferences and is used " +
-                "exclusively to talk to api.anthropic.com.",
+                "Your Gemini API key lives in EncryptedSharedPreferences and is used " +
+                "exclusively to talk to generativelanguage.googleapis.com.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -127,16 +127,16 @@ private fun ConsentStep(accepted: Boolean, onAcceptedChange: (Boolean) -> Unit) 
 
 @Composable
 private fun ApiKeyStep(apiKey: String, onChange: (String) -> Unit) {
-    SectionCard(title = "Claude API key") {
+    SectionCard(title = "Gemini API key") {
         Text(
-            "Obtain a key from console.anthropic.com. It is stored locally and never " +
-                "logged. Leave empty and the app will refuse to call the model.",
+            "Obtain a key from aistudio.google.com/apikey. It is stored locally and " +
+                "never logged. Leave empty and the app will refuse to call the model.",
             style = MaterialTheme.typography.bodyMedium,
         )
         OutlinedTextField(
             value = apiKey,
             onValueChange = onChange,
-            label = { Text("sk-ant-…") },
+            label = { Text("AIza…") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(

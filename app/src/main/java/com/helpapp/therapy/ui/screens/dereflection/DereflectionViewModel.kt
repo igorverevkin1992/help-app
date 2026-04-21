@@ -3,7 +3,7 @@ package com.helpapp.therapy.ui.screens.dereflection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.helpapp.therapy.data.db.entities.DereflectionEntity
-import com.helpapp.therapy.data.remote.ClaudeService
+import com.helpapp.therapy.data.remote.GeminiService
 import com.helpapp.therapy.data.repository.ModuleRepository
 import com.helpapp.therapy.data.repository.SessionRepository
 import com.helpapp.therapy.data.repository.UserContextRepository
@@ -35,7 +35,7 @@ data class DereflectionUiState(
 @HiltViewModel
 class DereflectionViewModel @Inject constructor(
     private val userContextRepository: UserContextRepository,
-    private val claude: ClaudeService,
+    private val gemini: GeminiService,
     private val moduleRepository: ModuleRepository,
     private val sessionRepository: SessionRepository,
     private val crisisScreener: CrisisScreener,
@@ -69,7 +69,7 @@ class DereflectionViewModel @Inject constructor(
         _state.update { it.copy(loading = true, error = null, patternInterrupt = false) }
         viewModelScope.launch {
             val context = userContextRepository.require()
-            val result = claude.runTool(
+            val result = gemini.runTool(
                 context = context,
                 userPrompt = "Current operational / bureaucratic tasks:\n${s.taskInput}",
                 taskDirective = TaskDirectives.DEREFLECTION,

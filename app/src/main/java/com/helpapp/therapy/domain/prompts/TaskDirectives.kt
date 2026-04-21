@@ -2,9 +2,9 @@ package com.helpapp.therapy.domain.prompts
 
 /**
  * Task directives for each therapeutic module. Structured output is enforced
- * via the Anthropic Tool Use API — these directives describe clinical intent
- * and allocation heuristics, while the JSON shape is pinned by the tool's
- * input_schema in [ToolDefinitions].
+ * via Gemini function calling — these directives describe clinical intent
+ * and allocation heuristics, while the JSON shape is pinned by the function
+ * declaration's parameters schema in [ToolDefinitions].
  */
 object TaskDirectives {
 

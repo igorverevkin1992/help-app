@@ -1,52 +1,43 @@
 package com.helpapp.therapy.domain.prompts
 
-import com.helpapp.therapy.data.remote.Tool
-import com.helpapp.therapy.data.remote.ToolChoice
+import com.helpapp.therapy.data.remote.FunctionDeclaration
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
 /**
- * Anthropic Tool Use schemas for each therapeutic module. Using tool_use
- * instead of fenced-json eliminates parser fragility: Claude is forced to
- * emit a JSON object matching the declared input_schema.
+ * Gemini function-calling schemas for each therapeutic module. Using function
+ * declarations instead of fenced-json eliminates parser fragility: the model
+ * is forced to emit args matching the declared parameters schema.
  */
 object ToolDefinitions {
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
-    val RESPONSIBILITY_PIE: Tool = Tool(
+    val RESPONSIBILITY_PIE: FunctionDeclaration = FunctionDeclaration(
         name = "record_responsibility_distribution",
         description = "Allocate 100% of responsibility for an irrational self-blaming " +
             "thought across four structural categories and emit the self-forgiveness " +
             "statement that follows from that allocation.",
-        inputSchema = json.parseToJsonElement(
+        parameters = json.parseToJsonElement(
             """
             {
               "type": "object",
               "properties": {
                 "biology_pct": {
                   "type": "integer",
-                  "minimum": 0,
-                  "maximum": 100,
-                  "description": "Weight of the involuntary neurobiological / amygdala reflex (baseline around 40, adjust ±10 based on the specific thought)"
+                  "description": "Weight of the involuntary neurobiological / amygdala reflex (baseline around 40, adjust plus or minus 10 based on the specific thought). Range 0-100."
                 },
                 "medical_pct": {
                   "type": "integer",
-                  "minimum": 0,
-                  "maximum": 100,
-                  "description": "Weight of the objective physical / medical limitation (baseline around 30)"
+                  "description": "Weight of the objective physical / medical limitation (baseline around 30). Range 0-100."
                 },
                 "social_pct": {
                   "type": "integer",
-                  "minimum": 0,
-                  "maximum": 100,
-                  "description": "Weight of the rational duty toward dependents (baseline around 20)"
+                  "description": "Weight of the rational duty toward dependents (baseline around 20). Range 0-100."
                 },
                 "control_pct": {
                   "type": "integer",
-                  "minimum": 0,
-                  "maximum": 100,
-                  "description": "Narrow zone of subjective agency (baseline around 10)"
+                  "description": "Narrow zone of subjective agency (baseline around 10). Range 0-100."
                 },
                 "tooltips": {
                   "type": "object",
@@ -69,18 +60,17 @@ object ToolDefinitions {
         ) as JsonObject,
     )
 
-    val DEREFLECTION: Tool = Tool(
+    val DEREFLECTION: FunctionDeclaration = FunctionDeclaration(
         name = "record_dereflection_reframing",
         description = "Reframe the user's mundane operational tasks as acts of generative " +
             "combat against entropy, isomorphic to martial planning.",
-        inputSchema = json.parseToJsonElement(
+        parameters = json.parseToJsonElement(
             """
             {
               "type": "object",
               "properties": {
                 "reframing_table": {
                   "type": "array",
-                  "minItems": 1,
                   "items": {
                     "type": "object",
                     "properties": {
@@ -101,11 +91,11 @@ object ToolDefinitions {
         ) as JsonObject,
     )
 
-    val VITALITY_COMPASS: Tool = Tool(
+    val VITALITY_COMPASS: FunctionDeclaration = FunctionDeclaration(
         name = "record_vitality_split",
         description = "Perform ACT cognitive defusion on an intrusive escapist fantasy, " +
             "then produce the Vitality vs. Suffering split with 3 concrete items each.",
-        inputSchema = json.parseToJsonElement(
+        parameters = json.parseToJsonElement(
             """
             {
               "type": "object",
@@ -116,18 +106,16 @@ object ToolDefinitions {
                 },
                 "suffering_path": {
                   "type": "array",
-                  "minItems": 3,
-                  "maxItems": 3,
-                  "items": { "type": "string" }
+                  "items": { "type": "string" },
+                  "description": "Exactly 3 concrete destructive consequences of surrendering to the hook."
                 },
                 "vitality_path": {
                   "type": "array",
-                  "minItems": 3,
-                  "maxItems": 3,
                   "items": {
                     "type": "string",
                     "description": "Micro-action anchored in the user's transcendent_goal, executable in under 10 minutes"
-                  }
+                  },
+                  "description": "Exactly 3 concrete micro-actions."
                 }
               },
               "required": ["defused_thought","suffering_path","vitality_path"]
@@ -135,6 +123,4 @@ object ToolDefinitions {
             """.trimIndent()
         ) as JsonObject,
     )
-
-    fun forceChoice(tool: Tool) = ToolChoice(type = "tool", name = tool.name)
 }

@@ -60,7 +60,7 @@ class OnboardingViewModel @Inject constructor(
             }
             OnboardingStep.ApiKey -> {
                 if (s.apiKey.isBlank()) {
-                    _state.update { it.copy(error = "Enter your Claude API key.") }
+                    _state.update { it.copy(error = "Enter your Gemini API key.") }
                     return
                 }
                 OnboardingStep.Context

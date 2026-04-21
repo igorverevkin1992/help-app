@@ -3,7 +3,7 @@ package com.helpapp.therapy.ui.screens.responsibility
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.helpapp.therapy.data.db.entities.ResponsibilityPieEntity
-import com.helpapp.therapy.data.remote.ClaudeService
+import com.helpapp.therapy.data.remote.GeminiService
 import com.helpapp.therapy.data.repository.ModuleRepository
 import com.helpapp.therapy.data.repository.SessionRepository
 import com.helpapp.therapy.data.repository.UserContextRepository
@@ -36,7 +36,7 @@ data class ResponsibilityUiState(
 @HiltViewModel
 class ResponsibilityViewModel @Inject constructor(
     private val userContextRepository: UserContextRepository,
-    private val claude: ClaudeService,
+    private val gemini: GeminiService,
     private val moduleRepository: ModuleRepository,
     private val sessionRepository: SessionRepository,
     private val crisisScreener: CrisisScreener,
@@ -61,7 +61,7 @@ class ResponsibilityViewModel @Inject constructor(
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             val context = userContextRepository.require()
-            val result = claude.runTool(
+            val result = gemini.runTool(
                 context = context,
                 userPrompt = """
                     |Automatic self-blaming thought of the moment:

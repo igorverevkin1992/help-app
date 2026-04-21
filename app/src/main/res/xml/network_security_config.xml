@@ -6,7 +6,7 @@
         </trust-anchors>
     </base-config>
     <domain-config>
-        <domain includeSubdomains="true">api.anthropic.com</domain>
+        <domain includeSubdomains="true">generativelanguage.googleapis.com</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Stores the Claude API key inside EncryptedSharedPreferences (AES-GCM on
+ * Stores the Gemini API key inside EncryptedSharedPreferences (AES-GCM on
  * top of an Android Keystore master key). There is intentionally no
  * build-time fallback: a missing key must be handled by the onboarding
  * flow, never silently supplied from a compiled constant.
@@ -41,6 +41,6 @@ class ApiKeyStore @Inject constructor(
     val hasKey: Boolean get() = apiKey.isNotBlank()
 
     private companion object {
-        const val KEY = "claude_api_key"
+        const val KEY = "gemini_api_key"
     }
 }

@@ -90,7 +90,7 @@ fun ResponsibilityPieScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(if (state.loading) "Deconstructing…" else "Deconstruct") }
 
-            if (state.loading) LoadingRow("Claude is distributing responsibility…")
+            if (state.loading) LoadingRow("Gemini is distributing responsibility…")
             state.error?.let { ErrorBox(it) }
 
             state.pie?.let { pie ->
