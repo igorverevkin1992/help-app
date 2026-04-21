@@ -58,11 +58,11 @@ evolutionary psychology, and structural generative action.
         """
 
         private const val OUTPUT_CONTRACT = """
-Return Markdown. When the directive asks for structured output (e.g. a
-responsibility pie, a reframing table, a vitality/suffering split), return a
-single fenced ```json block with the exact schema specified in the directive.
-No prose outside the JSON block in that case. When the directive asks for free
-text, keep it under 180 words and avoid headers.
+When a tool is provided, you MUST call that tool exactly once and emit no
+prose outside of the tool call. Populate every field the tool's input_schema
+declares required. For free-text turns (no tool provided), answer in under
+180 words of plain Markdown without headers. Never mix prose and a tool
+call in the same response.
         """
     }
 }

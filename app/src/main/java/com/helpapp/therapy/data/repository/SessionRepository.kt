@@ -5,6 +5,7 @@ import com.helpapp.therapy.data.db.entities.DailySessionEntity
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,27 +16,34 @@ class SessionRepository @Inject constructor(
 ) {
     fun observeRecent(): Flow<List<DailySessionEntity>> = dao.observeRecent()
 
+    /**
+     * Returns the session bucket corresponding to today in the device's
+     * current timezone. Timezone shifts do not double-count a day: the same
+     * localDate string always maps to one row.
+     */
     suspend fun todaySession(): DailySessionEntity {
-        val (start, end) = todayWindow()
-        val existing = dao.getForWindow(start, end)
+        val localDate = LocalDate.now(ZoneId.systemDefault()).format(ISO)
+        val existing = dao.getByLocalDate(localDate)
         if (existing != null) return existing
         val new = DailySessionEntity(
             sessionId = UUID.randomUUID().toString(),
             timestamp = System.currentTimeMillis(),
+            localDate = localDate,
         )
         dao.upsert(new)
         return new
     }
 
-    suspend fun markMorning(id: String) = dao.setMorning(id, true)
-    suspend fun markMidday(id: String) = dao.setMidday(id, true)
-    suspend fun markEvening(id: String) = dao.setEvening(id, true)
+    suspend fun markResponsibility(id: String) = dao.setResponsibility(id, true)
+    suspend fun markDereflection(id: String) = dao.setDereflection(id, true)
+    suspend fun markVitality(id: String) = dao.setVitality(id, true)
 
-    private fun todayWindow(): Pair<Long, Long> {
-        val zone = ZoneId.systemDefault()
-        val today = LocalDate.now(zone)
-        val start = today.atStartOfDay(zone).toInstant().toEpochMilli()
-        val end = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
-        return start to end
+    suspend fun purgeOlderThan(retentionDays: Int): Int {
+        val cutoff = System.currentTimeMillis() - retentionDays * 24L * 60L * 60L * 1000L
+        return dao.purgeOlderThan(cutoff)
+    }
+
+    private companion object {
+        val ISO: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
     }
 }

@@ -15,8 +15,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,9 +34,17 @@ import com.helpapp.therapy.ui.components.TherapyTopBar
 @Composable
 fun DereflectionScreen(
     onBack: () -> Unit,
+    onCrisis: () -> Unit,
     vm: DereflectionViewModel = hiltViewModel(),
 ) {
     val state by vm.state.collectAsState()
+
+    LaunchedEffect(state.crisisTriggered) {
+        if (state.crisisTriggered) {
+            vm.clearCrisis()
+            onCrisis()
+        }
+    }
 
     Scaffold(
         topBar = { TherapyTopBar("Dereflection · midday", onBack) },
@@ -59,10 +72,30 @@ fun DereflectionScreen(
                     minLines = 4,
                 )
                 Button(
-                    onClick = vm::generate,
-                    enabled = !state.loading && state.taskInput.isNotBlank(),
+                    onClick = vm::requestPatternInterrupt,
+                    enabled = !state.loading && state.taskInput.isNotBlank() && !state.patternInterrupt,
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(if (state.loading) "Reframing…" else "Reframe as generative combat") }
+            }
+
+            if (state.patternInterrupt) {
+                var seconds by remember { mutableStateOf(10) }
+                LaunchedEffect(state.patternInterrupt) {
+                    seconds = 10
+                    while (seconds > 0) {
+                        delay(1000)
+                        seconds -= 1
+                    }
+                    vm.generate()
+                }
+                SectionCard(title = "Pattern interrupt · $seconds s") {
+                    Text(
+                        "Hold. The app is imposing a mandatory ten-second pause before the " +
+                            "reframe is generated. Use this window to notice the urge to skip " +
+                            "the audit.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
 
             if (state.loading) LoadingRow("Claude is reframing operational tasks…")

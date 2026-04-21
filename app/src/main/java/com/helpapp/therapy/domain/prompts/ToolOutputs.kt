@@ -3,11 +3,12 @@ package com.helpapp.therapy.domain.prompts
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 
-private val Lenient = Json {
+private val ToolJson = Json {
     ignoreUnknownKeys = true
-    isLenient = true
     coerceInputValues = true
+    isLenient = false
 }
 
 @Serializable
@@ -47,18 +48,15 @@ data class VitalityResponse(
     @SerialName("vitality_path") val vitalityPath: List<String> = emptyList(),
 )
 
-object LlmJson {
-    private val fenceRegex = Regex("```(?:json)?\\s*([\\s\\S]*?)```", RegexOption.IGNORE_CASE)
-
-    fun extract(raw: String): String {
-        val match = fenceRegex.find(raw) ?: return raw.trim()
-        return match.groupValues[1].trim()
-    }
-
-    inline fun <reified T> parse(raw: String): T =
-        Lenient.decodeFromString(extract(raw))
-
-    fun parsePie(raw: String): PieResponse = parse(raw)
-    fun parseDereflection(raw: String): DereflectionResponse = parse(raw)
-    fun parseVitality(raw: String): VitalityResponse = parse(raw)
+/**
+ * Decodes the JsonElement that Anthropic returns as the `input` of a tool_use
+ * block. The schema is already validated on the API side, so we only need
+ * type-safe deserialization here.
+ */
+object ToolOutputs {
+    fun parsePie(input: JsonElement): PieResponse = ToolJson.decodeFromJsonElement(PieResponse.serializer(), input)
+    fun parseDereflection(input: JsonElement): DereflectionResponse =
+        ToolJson.decodeFromJsonElement(DereflectionResponse.serializer(), input)
+    fun parseVitality(input: JsonElement): VitalityResponse =
+        ToolJson.decodeFromJsonElement(VitalityResponse.serializer(), input)
 }

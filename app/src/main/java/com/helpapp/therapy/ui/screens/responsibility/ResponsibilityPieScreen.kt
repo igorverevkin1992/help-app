@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,10 +40,18 @@ import com.helpapp.therapy.ui.theme.PieSocial
 @Composable
 fun ResponsibilityPieScreen(
     onBack: () -> Unit,
+    onCrisis: () -> Unit,
     vm: ResponsibilityViewModel = hiltViewModel(),
 ) {
     val state by vm.state.collectAsState()
     var selected by remember { mutableStateOf<Int?>(null) }
+
+    LaunchedEffect(state.crisisTriggered) {
+        if (state.crisisTriggered) {
+            vm.clearCrisis()
+            onCrisis()
+        }
+    }
 
     Scaffold(
         topBar = { TherapyTopBar("Responsibility pie · morning", onBack) },

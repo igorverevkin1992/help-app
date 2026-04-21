@@ -1,99 +1,50 @@
 package com.helpapp.therapy.domain.prompts
 
 /**
- * Task directives for each therapeutic module. They are appended to the
- * system prompt and tell Claude exactly what structured output to produce.
+ * Task directives for each therapeutic module. Structured output is enforced
+ * via the Anthropic Tool Use API — these directives describe clinical intent
+ * and allocation heuristics, while the JSON shape is pinned by the tool's
+ * input_schema in [ToolDefinitions].
  */
 object TaskDirectives {
 
     const val RESPONSIBILITY_PIE = """
-The user will submit an irrational self-blaming thought. Your job is to
-deconstruct it via the four-segment Responsibility Pie.
+The user will submit an irrational self-blaming thought and a subjective guilt
+score (0–10). Deconstruct the thought via the four-segment Responsibility Pie
+and call the record_responsibility_distribution tool with:
 
-Allocate 100% of responsibility across exactly these four categories,
-anchored to the user's context variables:
-  1. biology_pct  — the involuntary neurobiological trigger
-                    (baseline ~40)
-  2. medical_pct  — the objective physical/medical limitation
-                    (baseline ~30)
-  3. social_pct   — the rational duty toward dependents
-                    (baseline ~20)
-  4. control_pct  — the narrow zone of subjective agency
-                    (baseline ~10)
+  - biology_pct  ~40 baseline: involuntary neurobiological / amygdala reflex
+  - medical_pct  ~30 baseline: objective physical / medical limitation
+  - social_pct   ~20 baseline: rational duty toward dependents
+  - control_pct  ~10 baseline: narrow zone of subjective agency
 
-Adjust within ±10 per category when the specific thought warrants it. All
-four must sum to exactly 100.
-
-For each category produce a tooltip (max 35 words, clinical tone, cites
-either evolutionary reflex, medical objectivity, dependent welfare, or
-agency). Conclude with a single self-forgiveness statement (max 40 words)
-that explicitly names biology and medical fact as the dominant variables
-and strips the user of 'eternal debtor' status.
-
-Return exactly this JSON schema, nothing else:
-
-```json
-{
-  "biology_pct": <int>,
-  "medical_pct": <int>,
-  "social_pct": <int>,
-  "control_pct": <int>,
-  "tooltips": {
-    "biology": "<string>",
-    "medical": "<string>",
-    "social":  "<string>",
-    "control": "<string>"
-  },
-  "self_forgiveness_statement": "<string>"
-}
-```
+Adjust each category within ±10 based on the thought. All four MUST sum to
+exactly 100. Tooltips ≤35 words, clinical tone. The self_forgiveness_statement
+≤40 words, names biology and medical fact as dominant variables, strips the
+'eternal debtor' status, no mysticism.
 """
 
     const val DEREFLECTION = """
-The user will submit a list of current mundane / bureaucratic / operational
-tasks. Your job is Franklian dereflection: recalibrate their perception so
-each task is reframed as an act of 'generative combat' against entropy —
-structurally isomorphic to martial planning.
-
-Return exactly this JSON schema, nothing else:
-
-```json
-{
-  "reframing_table": [
-    { "mundane": "<user task>", "generative_equivalent": "<reframe>" }
-  ],
-  "anchor_statement": "<one sentence, max 35 words, declaring the user's
-    current mission is creation and that building against entropy is the
-    highest form of discipline and civic courage>"
-}
-```
-
-No direct advice. No toxic positivity. Keep language austere and structural.
+The user will submit a list of mundane / bureaucratic / operational tasks.
+Apply Franklian dereflection: each task is reframed as an act of generative
+combat against entropy, isomorphic to martial planning. Call the
+record_dereflection_reframing tool with one reframing_table row per submitted
+task, and one anchor_statement (≤35 words) declaring that construction
+against entropy is the highest form of discipline and civic courage. No
+toxic positivity, no direct advice.
 """
 
     const val VITALITY_COMPASS = """
 The user will submit an intrusive escapist or danger-seeking fantasy (the
-'cognitive hook'). Apply ACT cognitive defusion, then produce the
-Vitality vs. Suffering split.
+'cognitive hook'). Apply ACT cognitive defusion, then call the
+record_vitality_split tool with:
 
-Steps:
-  1. Reword the hook in the defused form:
-       "My traumatized mind is currently generating a narrative that I
-        should ..."
-  2. On the suffering vector, name 3 concrete destructive consequences of
+  1. defused_thought — reword the hook as: "My traumatized mind is currently
+     generating a narrative that I should ..."
+  2. suffering_path — exactly 3 concrete destructive consequences of
      surrendering to the hook (self-recrimination loops, procrastination,
-     secondary trauma, risk to the user's objective_limitation, etc.).
-  3. On the vitality vector, produce 3 concrete micro-actions anchored in
-     the user's transcendent_goal that can be executed in under 10 minutes.
-
-Return exactly this JSON schema, nothing else:
-
-```json
-{
-  "defused_thought": "<string>",
-  "suffering_path": ["<string>", "<string>", "<string>"],
-  "vitality_path": ["<string>", "<string>", "<string>"]
-}
-```
+     secondary trauma, risk to User_Objective_Limitation, etc.)
+  3. vitality_path — exactly 3 concrete micro-actions anchored in
+     User_Transcendent_Goal, each executable in under 10 minutes.
 """
 }

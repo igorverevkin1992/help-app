@@ -50,7 +50,7 @@ fun AssessmentScreen(
                 )
                 state.midsAnswers.forEachIndexed { index, value ->
                     LikertRow(
-                        label = "Item ${index + 1}",
+                        label = AssessmentItems.MIDS[index],
                         value = value,
                         range = 0..4,
                         onChange = { vm.onMidsAnswer(index, it) },
@@ -65,7 +65,7 @@ fun AssessmentScreen(
             SectionCard(title = "SSFS · SFFA · 8 items · score 1..4") {
                 state.sffaAnswers.forEachIndexed { index, value ->
                     LikertRow(
-                        label = "SFFA ${index + 1}",
+                        label = AssessmentItems.SFFA[index],
                         value = value,
                         range = 1..4,
                         onChange = { vm.onSffaAnswer(index, it) },
@@ -77,7 +77,7 @@ fun AssessmentScreen(
             SectionCard(title = "SSFS · SFB · 9 items · score 1..4") {
                 state.sfbAnswers.forEachIndexed { index, value ->
                     LikertRow(
-                        label = "SFB ${index + 1}",
+                        label = AssessmentItems.SFB[index],
                         value = value,
                         range = 1..4,
                         onChange = { vm.onSfbAnswer(index, it) },

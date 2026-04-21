@@ -8,9 +8,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Stores the Claude API key in EncryptedSharedPreferences. BuildConfig value
- * (injected from a Gradle property at build time) acts as a fallback for
- * developer builds.
+ * Stores the Claude API key inside EncryptedSharedPreferences (AES-GCM on
+ * top of an Android Keystore master key). There is intentionally no
+ * build-time fallback: a missing key must be handled by the onboarding
+ * flow, never silently supplied from a compiled constant.
  */
 @Singleton
 class ApiKeyStore @Inject constructor(
@@ -31,9 +32,13 @@ class ApiKeyStore @Inject constructor(
 
     var apiKey: String
         get() = prefs.getString(KEY, null).orEmpty()
-        set(value) = prefs.edit().putString(KEY, value).apply()
+        set(value) = prefs.edit().putString(KEY, value.trim()).apply()
 
-    fun effectiveKey(fallback: String): String = apiKey.ifBlank { fallback }
+    fun clear() {
+        prefs.edit().remove(KEY).apply()
+    }
+
+    val hasKey: Boolean get() = apiKey.isNotBlank()
 
     private companion object {
         const val KEY = "claude_api_key"

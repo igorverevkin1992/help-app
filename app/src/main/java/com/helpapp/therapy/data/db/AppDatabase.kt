@@ -2,6 +2,8 @@ package com.helpapp.therapy.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.helpapp.therapy.data.db.dao.AssessmentDao
 import com.helpapp.therapy.data.db.dao.DereflectionDao
 import com.helpapp.therapy.data.db.dao.ResponsibilityPieDao
@@ -24,8 +26,8 @@ import com.helpapp.therapy.data.db.entities.VitalityCompassEntity
         VitalityCompassEntity::class,
         AssessmentEntity::class,
     ],
-    version = 1,
-    exportSchema = false,
+    version = 2,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userContextDao(): UserContextDao
@@ -37,5 +39,41 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "therapy.db"
+
+        /**
+         * Renames the per-module completion flags so that the column names
+         * describe the module rather than the time of day, without losing
+         * any historical rows.
+         */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS daily_therapy_sessions_new (
+                        sessionId TEXT NOT NULL PRIMARY KEY,
+                        timestamp INTEGER NOT NULL,
+                        localDate TEXT NOT NULL DEFAULT '',
+                        responsibilityCompleted INTEGER NOT NULL DEFAULT 0,
+                        dereflectionCompleted INTEGER NOT NULL DEFAULT 0,
+                        vitalityCompleted INTEGER NOT NULL DEFAULT 0
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO daily_therapy_sessions_new
+                        (sessionId, timestamp, localDate,
+                         responsibilityCompleted, dereflectionCompleted, vitalityCompleted)
+                    SELECT sessionId, timestamp, '',
+                           morningCompleted, middayCompleted, eveningCompleted
+                    FROM daily_therapy_sessions
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE daily_therapy_sessions")
+                db.execSQL("ALTER TABLE daily_therapy_sessions_new RENAME TO daily_therapy_sessions")
+            }
+        }
+
+        val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
     }
 }

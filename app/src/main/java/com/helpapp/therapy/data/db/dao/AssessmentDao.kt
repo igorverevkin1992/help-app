@@ -16,4 +16,7 @@ interface AssessmentDao {
 
     @Query("SELECT * FROM psychometric_assessments ORDER BY timestamp DESC LIMIT 1")
     suspend fun latest(): AssessmentEntity?
+
+    @Query("SELECT * FROM psychometric_assessments ORDER BY timestamp ASC")
+    suspend fun getAll(): List<AssessmentEntity>
 }

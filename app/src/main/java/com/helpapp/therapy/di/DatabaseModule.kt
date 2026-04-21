@@ -9,11 +9,14 @@ import com.helpapp.therapy.data.db.dao.ResponsibilityPieDao
 import com.helpapp.therapy.data.db.dao.SessionDao
 import com.helpapp.therapy.data.db.dao.UserContextDao
 import com.helpapp.therapy.data.db.dao.VitalityCompassDao
+import com.helpapp.therapy.security.CryptoKeyStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.sqlcipher.database.SQLiteDatabase
+import net.sqlcipher.database.SupportFactory
 import javax.inject.Singleton
 
 @Module
@@ -22,10 +25,20 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME)
-            .fallbackToDestructiveMigration()
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+        cryptoKeyStore: CryptoKeyStore,
+    ): AppDatabase {
+        SQLiteDatabase.loadLibs(context)
+        val passphrase = cryptoKeyStore.getOrCreateDbPassphrase()
+        val passBytes = SQLiteDatabase.getBytes(passphrase)
+        val factory = SupportFactory(passBytes)
+
+        return Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME)
+            .openHelperFactory(factory)
+            .addMigrations(*AppDatabase.ALL_MIGRATIONS)
             .build()
+    }
 
     @Provides fun provideUserContextDao(db: AppDatabase): UserContextDao = db.userContextDao()
     @Provides fun provideSessionDao(db: AppDatabase): SessionDao = db.sessionDao()

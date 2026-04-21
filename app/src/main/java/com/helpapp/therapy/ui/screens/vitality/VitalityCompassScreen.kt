@@ -21,6 +21,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -40,9 +41,17 @@ import com.helpapp.therapy.ui.theme.VitalityBright
 @Composable
 fun VitalityCompassScreen(
     onBack: () -> Unit,
+    onCrisis: () -> Unit,
     vm: VitalityViewModel = hiltViewModel(),
 ) {
     val state by vm.state.collectAsState()
+
+    LaunchedEffect(state.crisisTriggered) {
+        if (state.crisisTriggered) {
+            vm.clearCrisis()
+            onCrisis()
+        }
+    }
 
     Scaffold(
         topBar = { TherapyTopBar("Vitality compass · evening", onBack) },

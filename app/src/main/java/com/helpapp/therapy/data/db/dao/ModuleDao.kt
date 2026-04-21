@@ -15,6 +15,9 @@ interface ResponsibilityPieDao {
 
     @Query("SELECT * FROM module_responsibility_pie ORDER BY timestamp DESC LIMIT 60")
     fun observeRecent(): Flow<List<ResponsibilityPieEntity>>
+
+    @Query("SELECT * FROM module_responsibility_pie ORDER BY timestamp ASC")
+    suspend fun getAll(): List<ResponsibilityPieEntity>
 }
 
 @Dao
@@ -24,6 +27,9 @@ interface DereflectionDao {
 
     @Query("SELECT * FROM module_dereflection ORDER BY timestamp DESC LIMIT 30")
     fun observeRecent(): Flow<List<DereflectionEntity>>
+
+    @Query("SELECT * FROM module_dereflection ORDER BY timestamp ASC")
+    suspend fun getAll(): List<DereflectionEntity>
 }
 
 @Dao
@@ -36,4 +42,7 @@ interface VitalityCompassDao {
 
     @Query("SELECT * FROM module_vitality_compass ORDER BY timestamp DESC LIMIT 60")
     fun observeRecent(): Flow<List<VitalityCompassEntity>>
+
+    @Query("SELECT * FROM module_vitality_compass ORDER BY timestamp ASC")
+    suspend fun getAll(): List<VitalityCompassEntity>
 }

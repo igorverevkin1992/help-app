@@ -16,6 +16,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlin.math.atan2
 import kotlin.math.min
@@ -41,10 +43,12 @@ fun ResponsibilityPie(
 ) {
     val total = segments.sumOf { it.percent }.coerceAtLeast(1)
     var canvasSize by remember { mutableStateOf(Size.Zero) }
+    val description = segments.joinToString(", ") { "${it.label} ${it.percent} percent" }
     Box(
         modifier
             .fillMaxWidth()
-            .height(260.dp),
+            .height(260.dp)
+            .semantics { contentDescription = "Responsibility distribution: $description" },
     ) {
         Canvas(
             modifier = Modifier

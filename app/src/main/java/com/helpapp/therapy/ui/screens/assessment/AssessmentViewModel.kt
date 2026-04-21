@@ -28,9 +28,9 @@ data class AssessmentUiState(
     val sfbScore: Int get() = sfbAnswers.sum()
 
     companion object {
-        const val MIDS_ITEM_COUNT = 18
-        const val SFFA_ITEM_COUNT = 8
-        const val SFB_ITEM_COUNT = 9
+        val MIDS_ITEM_COUNT = AssessmentItems.MIDS.size
+        val SFFA_ITEM_COUNT = AssessmentItems.SFFA.size
+        val SFB_ITEM_COUNT = AssessmentItems.SFB.size
         const val MIDS_CUTOFF = 27
     }
 }

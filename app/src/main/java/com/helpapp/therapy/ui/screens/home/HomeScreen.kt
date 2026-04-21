@@ -81,9 +81,9 @@ fun HomeScreen(
                 )
                 val session = state.session
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatusDot("Morning", session?.morningCompleted == true)
-                    StatusDot("Midday", session?.middayCompleted == true)
-                    StatusDot("Evening", session?.eveningCompleted == true)
+                    StatusDot("Responsibility", session?.responsibilityCompleted == true)
+                    StatusDot("Dereflection", session?.dereflectionCompleted == true)
+                    StatusDot("Vitality", session?.vitalityCompleted == true)
                 }
             }
 

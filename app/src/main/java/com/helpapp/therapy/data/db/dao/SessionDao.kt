@@ -12,8 +12,8 @@ interface SessionDao {
     @Query("SELECT * FROM daily_therapy_sessions WHERE sessionId = :id LIMIT 1")
     suspend fun get(id: String): DailySessionEntity?
 
-    @Query("SELECT * FROM daily_therapy_sessions WHERE timestamp BETWEEN :start AND :end ORDER BY timestamp DESC LIMIT 1")
-    suspend fun getForWindow(start: Long, end: Long): DailySessionEntity?
+    @Query("SELECT * FROM daily_therapy_sessions WHERE localDate = :localDate LIMIT 1")
+    suspend fun getByLocalDate(localDate: String): DailySessionEntity?
 
     @Query("SELECT * FROM daily_therapy_sessions ORDER BY timestamp DESC LIMIT 30")
     fun observeRecent(): Flow<List<DailySessionEntity>>
@@ -21,12 +21,15 @@ interface SessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(session: DailySessionEntity)
 
-    @Query("UPDATE daily_therapy_sessions SET morningCompleted = :done WHERE sessionId = :id")
-    suspend fun setMorning(id: String, done: Boolean)
+    @Query("UPDATE daily_therapy_sessions SET responsibilityCompleted = :done WHERE sessionId = :id")
+    suspend fun setResponsibility(id: String, done: Boolean)
 
-    @Query("UPDATE daily_therapy_sessions SET middayCompleted = :done WHERE sessionId = :id")
-    suspend fun setMidday(id: String, done: Boolean)
+    @Query("UPDATE daily_therapy_sessions SET dereflectionCompleted = :done WHERE sessionId = :id")
+    suspend fun setDereflection(id: String, done: Boolean)
 
-    @Query("UPDATE daily_therapy_sessions SET eveningCompleted = :done WHERE sessionId = :id")
-    suspend fun setEvening(id: String, done: Boolean)
+    @Query("UPDATE daily_therapy_sessions SET vitalityCompleted = :done WHERE sessionId = :id")
+    suspend fun setVitality(id: String, done: Boolean)
+
+    @Query("DELETE FROM daily_therapy_sessions WHERE timestamp < :olderThan")
+    suspend fun purgeOlderThan(olderThan: Long): Int
 }
