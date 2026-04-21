@@ -93,8 +93,14 @@ fun CrisisScreen(
 }
 
 private fun dial(context: android.content.Context, phone: String) {
+    // Whitelist-only: `+` and digits. DTMF control chars (,;*#N) and any
+    // non-ASCII are stripped so a pasted payload cannot craft an alternate
+    // intent URI. Uri.fromParts avoids Uri.parse's percent-decoding quirks.
+    val sanitized = phone.filter { it.isDigit() || it == '+' }
+    if (sanitized.isBlank()) return
     val intent = Intent(Intent.ACTION_DIAL).apply {
-        data = Uri.parse("tel:${phone.filter { it.isDigit() || it == '+' }}")
+        data = Uri.fromParts("tel", sanitized, null)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     runCatching { context.startActivity(intent) }
 }

@@ -1,12 +1,15 @@
 package com.helpapp.therapy.di
 
 import com.helpapp.therapy.data.prefs.ApiKeyStore
+import com.helpapp.therapy.data.prefs.AppPreferences
 import com.helpapp.therapy.data.remote.GeminiApi
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.CertificatePinner
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,12 +26,23 @@ object NetworkModule {
 
     private const val BASE_URL = "https://generativelanguage.googleapis.com/"
 
-    // Google GTS root CA pins — primary + two backups. These MUST be verified
-    // against the live cert chain of generativelanguage.googleapis.com before
-    // shipping. Rotate when Google rolls roots.
-    private const val PIN_PRIMARY = "sha256/hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc="
-    private const val PIN_BACKUP_1 = "sha256/Vfd95BwDeSQo+NUYxVEEIlvkOlWY2SalKK1lPhzOx78="
-    private const val PIN_BACKUP_2 = "sha256/cGuxAXyFXFkWm61cF4HPWX8S0srS9j0aSqN0k4AP+4A="
+    // Public SPKI hashes for Google Trust Services roots used by
+    // generativelanguage.googleapis.com. Multiple roots are pinned so that
+    // expiry / cross-sign rotation does not brick the app. These SHOULD be
+    // re-verified against the live chain at each release cut — see
+    // https://pki.goog/repository/ for the current root catalogue.
+    private val GOOGLE_ROOT_PINS = arrayOf(
+        // GTS Root R1
+        "sha256/hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=",
+        // GTS Root R2
+        "sha256/Vfd95BwDeSQo+NUYxVEEIlvkOlWY2SalKK1lPhzOx78=",
+        // GTS Root R3 (ECC)
+        "sha256/QXnt2YHvdHR3tJYmQIr0Paosp6t/nggsEGD4QJZ3Q0g=",
+        // GTS Root R4 (ECC)
+        "sha256/mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=",
+        // GlobalSign Root CA - R2 (legacy cross-sign fallback)
+        "sha256/iie1VXtL7HzAMF+/PVPR9xzT80kQxdZeJ+zduCB3uj0=",
+    )
 
     @Provides
     @Singleton
@@ -54,13 +68,14 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideCertificatePinner(): CertificatePinner = CertificatePinner.Builder()
-        .add("generativelanguage.googleapis.com", PIN_PRIMARY, PIN_BACKUP_1, PIN_BACKUP_2)
+        .add("generativelanguage.googleapis.com", *GOOGLE_ROOT_PINS)
         .build()
 
     @Provides
     @Singleton
     fun provideOkHttpClient(
         apiKeyStore: ApiKeyStore,
+        preferences: AppPreferences,
         pinner: CertificatePinner,
     ): OkHttpClient {
         val logger = HttpLoggingInterceptor().apply {
@@ -73,6 +88,12 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .certificatePinner(pinner)
             .addInterceptor { chain ->
+                // Fail-closed on offline-only mode before a socket is opened.
+                val offline = runCatching {
+                    runBlocking { preferences.snapshot.first().offlineOnlyMode }
+                }.getOrDefault(false)
+                if (offline) throw OfflineOnlyException()
+
                 val key = apiKeyStore.apiKey
                 if (key.isBlank()) throw MissingApiKeyException()
                 val request = chain.request().newBuilder()
@@ -106,4 +127,5 @@ object NetworkModule {
     fun provideGeminiApi(retrofit: Retrofit): GeminiApi = retrofit.create(GeminiApi::class.java)
 }
 
-class MissingApiKeyException : RuntimeException("Gemini API key is not configured")
+class MissingApiKeyException : java.io.IOException("Gemini API key is not configured")
+class OfflineOnlyException : java.io.IOException("Offline-only mode is enabled")

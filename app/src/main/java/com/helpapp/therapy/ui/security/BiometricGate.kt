@@ -27,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.helpapp.therapy.data.prefs.AppPreferences
+import com.helpapp.therapy.security.SessionLock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,22 +36,25 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private enum class GateState { Unknown, Required, Unlocked, NotAvailable }
-
 @HiltViewModel
 class BiometricGateViewModel @Inject constructor(
     preferences: AppPreferences,
+    private val sessionLock: SessionLock,
 ) : ViewModel() {
 
-    private val _enabled = MutableStateFlow<Boolean?>(null)
-    val enabled: StateFlow<Boolean?> = _enabled.asStateFlow()
+    private val _gateEnabled = MutableStateFlow<Boolean?>(null)
+    val gateEnabled: StateFlow<Boolean?> = _gateEnabled.asStateFlow()
+    val locked: StateFlow<Boolean> = sessionLock.locked
 
     init {
         viewModelScope.launch {
             val snap = preferences.snapshot.first()
-            _enabled.value = snap.biometricGateEnabled
+            _gateEnabled.value = snap.biometricGateEnabled
+            if (!snap.biometricGateEnabled) sessionLock.unlock()
         }
     }
+
+    fun onAuthenticated() = sessionLock.unlock()
 }
 
 @Composable
@@ -58,49 +62,49 @@ fun BiometricGate(
     vm: BiometricGateViewModel = hiltViewModel(),
     content: @Composable () -> Unit,
 ) {
-    val enabled by vm.enabled.collectAsState()
+    val gateEnabled by vm.gateEnabled.collectAsState()
+    val locked by vm.locked.collectAsState()
     val context = LocalContext.current
     val activity = context as? FragmentActivity
-    var gate by remember { mutableStateOf(GateState.Unknown) }
+    var hardwareAvailable by remember { mutableStateOf<Boolean?>(null) }
 
-    LaunchedEffect(enabled, activity) {
-        val flag = enabled
-        if (flag == null) return@LaunchedEffect
+    LaunchedEffect(gateEnabled, activity) {
+        val flag = gateEnabled ?: return@LaunchedEffect
         if (!flag || activity == null) {
-            gate = GateState.Unlocked
+            hardwareAvailable = false
             return@LaunchedEffect
         }
         val canAuth = BiometricManager.from(context).canAuthenticate(
             BiometricManager.Authenticators.BIOMETRIC_STRONG or
                 BiometricManager.Authenticators.DEVICE_CREDENTIAL
         )
-        gate = if (canAuth == BiometricManager.BIOMETRIC_SUCCESS) GateState.Required
-        else GateState.NotAvailable
+        hardwareAvailable = canAuth == BiometricManager.BIOMETRIC_SUCCESS
+        if (hardwareAvailable == false) vm.onAuthenticated()
     }
 
-    when (gate) {
-        GateState.Unknown -> Box(Modifier.fillMaxSize())
-        GateState.Unlocked, GateState.NotAvailable -> content()
-        GateState.Required -> {
-            if (activity == null) {
-                content()
-                return
-            }
+    when {
+        gateEnabled == null -> Box(Modifier.fillMaxSize())
+        !locked -> content()
+        hardwareAvailable == false -> content()
+        activity == null -> content()
+        else -> {
             LockedPane(
                 onUnlock = {
                     promptBiometric(
                         activity = activity,
-                        onSuccess = { gate = GateState.Unlocked },
-                        onFatal = { gate = GateState.NotAvailable },
+                        onSuccess = { vm.onAuthenticated() },
+                        onFatal = { vm.onAuthenticated() },
                     )
                 },
             )
-            LaunchedEffect(activity) {
-                promptBiometric(
-                    activity = activity,
-                    onSuccess = { gate = GateState.Unlocked },
-                    onFatal = { gate = GateState.NotAvailable },
-                )
+            LaunchedEffect(locked) {
+                if (locked) {
+                    promptBiometric(
+                        activity = activity,
+                        onSuccess = { vm.onAuthenticated() },
+                        onFatal = { vm.onAuthenticated() },
+                    )
+                }
             }
         }
     }

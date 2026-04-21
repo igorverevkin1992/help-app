@@ -2,6 +2,7 @@ package com.helpapp.therapy.domain.prompts
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
@@ -50,13 +51,42 @@ data class VitalityResponse(
 
 /**
  * Decodes the JsonElement that Gemini returns as the `args` of a functionCall
- * part. The schema is already validated on the API side, so we only need
- * type-safe deserialization here.
+ * part. Gemini's schema subset does not enforce min/max on arrays or numeric
+ * ranges, so we re-validate the invariants client-side. Missing fields or
+ * off-spec cardinalities surface as [SerializationException] so [ErrorMapper]
+ * can show a uniform "schema mismatch" message.
  */
 object ToolOutputs {
-    fun parsePie(input: JsonElement): PieResponse = ToolJson.decodeFromJsonElement(PieResponse.serializer(), input)
-    fun parseDereflection(input: JsonElement): DereflectionResponse =
-        ToolJson.decodeFromJsonElement(DereflectionResponse.serializer(), input)
-    fun parseVitality(input: JsonElement): VitalityResponse =
-        ToolJson.decodeFromJsonElement(VitalityResponse.serializer(), input)
+    fun parsePie(input: JsonElement): PieResponse {
+        val p = ToolJson.decodeFromJsonElement(PieResponse.serializer(), input)
+        listOf(p.biologyPct, p.medicalPct, p.socialPct, p.controlPct).forEach {
+            if (it !in 0..100) throw SerializationException("pie percent out of range")
+        }
+        if (p.statement.isBlank()) throw SerializationException("missing self-forgiveness statement")
+        return p
+    }
+
+    fun parseDereflection(input: JsonElement): DereflectionResponse {
+        val d = ToolJson.decodeFromJsonElement(DereflectionResponse.serializer(), input)
+        if (d.reframingTable.isEmpty()) {
+            throw SerializationException("dereflection returned empty reframing table")
+        }
+        if (d.anchorStatement.isBlank()) {
+            throw SerializationException("dereflection returned no anchor statement")
+        }
+        return d
+    }
+
+    fun parseVitality(input: JsonElement): VitalityResponse {
+        val v = ToolJson.decodeFromJsonElement(VitalityResponse.serializer(), input)
+        if (v.defusedThought.isBlank()) {
+            throw SerializationException("vitality returned no defused thought")
+        }
+        val suffering = v.sufferingPath.filter { it.isNotBlank() }.take(3)
+        val vitality = v.vitalityPath.filter { it.isNotBlank() }.take(3)
+        if (suffering.size < 3 || vitality.size < 3) {
+            throw SerializationException("vitality paths must each contain 3 items")
+        }
+        return v.copy(sufferingPath = suffering, vitalityPath = vitality)
+    }
 }
