@@ -89,9 +89,13 @@ object NetworkModule {
             .certificatePinner(pinner)
             .addInterceptor { chain ->
                 // Fail-closed on offline-only mode before a socket is opened.
+                // If the preferences read itself fails we treat it as "offline"
+                // rather than silently letting PHI leave the device — the user
+                // explicitly opted into offline-only and a transient DataStore
+                // IO error must not regress that contract.
                 val offline = runCatching {
                     runBlocking { preferences.snapshot.first().offlineOnlyMode }
-                }.getOrDefault(false)
+                }.getOrElse { true }
                 if (offline) throw OfflineOnlyException()
 
                 val key = apiKeyStore.apiKey
